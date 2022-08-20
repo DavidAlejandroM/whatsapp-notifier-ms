@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "target": "es6",
+    "lib": ["es6"],
+    "types": ["reflect-metadata"],
+    "module": "commonjs",
+    "outDir": "./dist",
+    "strict": true,
+    "inlineSourceMap": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,               // json imports
+    "esModuleInterop": true,                 // import common modules as ES6 Modules
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node"
+  }
+}
