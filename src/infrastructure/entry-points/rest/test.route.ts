@@ -1,7 +1,7 @@
 import {Router} from "express";
-import {TestCtrl} from "../test/test-controller";
-import {TYPES} from "../../../../application/config/types";
-import {container} from "../../../../application/config/inversify.config";
+import {TestCtrl} from "./test/test-controller";
+import {TYPES} from "../../../application/config/types";
+import {container} from "../../../application/config/inversify.config";
 const router: Router = Router();
 /**
  * http://localhost/lead POST

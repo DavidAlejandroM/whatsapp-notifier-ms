@@ -108,3 +108,5 @@ dist
 input.csv
 *.csv
 package-lock.json
+.wwebjs_auth/*
+tmp/*

@@ -1,4 +1,4 @@
-import {  } from 'reactive-commons/package.json'
+//import {  } from 'reactive-commons/package.json'
 export class ListenEvents {
 
     registry: any;

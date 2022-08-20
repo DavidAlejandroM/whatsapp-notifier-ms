@@ -13,9 +13,10 @@ function removeExtension(fileName: string): string {
 
 function loadRouter(file: string): void {
     const name = removeExtension(file);
+    console.log(file)
     if (name !== "routes-config") {
         import(`./${file}`).then((routerModule) => {
-            console.log("cargado", name);
+            console.log("cargado route:", name);
             router.use(`/${process.env.CONTEXT_API || 'api'}/${name}`, routerModule.router);
         });
     }
@@ -27,6 +28,6 @@ router.get("/", (req: Request, res: Response) => {
 
 console.info(`api context: /${process.env.CONTEXT_API || 'api'}/`)
 
-readdirSync(PATH_ROUTES).filter((file) => loadRouter(file));
+readdirSync(PATH_ROUTES).filter(name => name.includes("route")).filter((file) => loadRouter(file));
 
 export default router;

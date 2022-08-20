@@ -7,7 +7,7 @@ import debug from "debug";
 import morgan from "morgan";
 import {LoggerOptions} from "./config/logger";
 import {mongoConnection} from "../infrastructure/driven-adapters/mongo-repository/config/mongo-config";
-import router from "../infrastructure/entry-points/rest/config/routes-config";
+import router from "../infrastructure/entry-points/rest/routes-config";
 
 const app: Application = express();
 const server: http.Server = http.createServer(app);

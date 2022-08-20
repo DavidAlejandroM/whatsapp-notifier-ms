@@ -2,7 +2,7 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "target": "es6",
-    "lib": ["es6"],
+    "lib": ["es6","dom"],
     "types": ["reflect-metadata"],
     "module": "commonjs",
     "outDir": "./dist",
