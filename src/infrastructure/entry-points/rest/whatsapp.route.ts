@@ -10,5 +10,6 @@ const router: Router = Router();
 const controller: WhatsappController = container.get<WhatsappController>(TYPES.WhatsappController);
 
 router.post("/", controller.post);
+router.get("/", controller.get);
 
 export {router};

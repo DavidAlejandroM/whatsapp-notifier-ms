@@ -6,7 +6,9 @@ const TYPES = {
     TestCtrl: Symbol.for("TestCtrl"),
     WhatsappRepository: Symbol.for("WhatsappRepository"),
     WhatsappController: Symbol.for("WhatsappController"),
-
+    WhatsappUseCase: Symbol.for("WhatsappUseCase"),
+    QrListener: Symbol.for("QrListener"),
+    ParamRepository: Symbol.for("ParamRepository"),
 };
 
 export {TYPES};

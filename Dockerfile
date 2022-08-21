@@ -1,27 +1,29 @@
-FROM node:16
+FROM node
 
 WORKDIR /usr/src/app
 
-RUN pwd
-RUN mkdir -p /opt/oracle
-RUN cd /opt/oracle
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basic-linuxx64.zip
-RUN unzip instantclient-basic-linuxx64.zip
-RUN ln -s instantclient_21_5/libclntsh.so.21.1 instantclient_21_5/libclntsh.so
-RUN ln -s instantclient_21_5/libocci.so.21.1 libocci.so
-#RUN ldconfig
-#RUN cd /usr/src/app
-
 COPY package*.json ./
 
+# Install Chromium.
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+      --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
+COPY dist .
+COPY .env .
 
 RUN npm install
 
-COPY . .
-
 RUN ls -l
 
-EXPOSE 3010
-#CMD [ "node", "dist/application/app.js" ]
-CMD [ "ls", "-l","instantclient_21_5" ]
+# Run everything after as non-privileged user.
+#RUN useradd -ms /bin/bash wppuser
+#USER wppuser
+
+EXPOSE 3000
+CMD [ "node", "application/app.js" ]

@@ -2,19 +2,28 @@ import {WhatsappRepository} from "../../../core/model/whatsapp/whatsapp-reposito
 import {Message} from "../../../core/model/whatsapp/message";
 import {injectable} from "inversify";
 import {Client, LocalAuth} from "whatsapp-web.js";
-import {generate} from "qrcode-terminal";
-import {image as imageQr} from "qr-image";
+import {TYPES} from "../../../application/config/types";
+import {container} from "../../../application/config/inversify.config";
+import {QrListener} from "../../../core/model/whatsapp/qr-listener";
+import {imageSync as imageQr} from "qr-image";
+
+let context: WhatsappRespositoryAdapter;
 
 @injectable()
 export class WhatsappRespositoryAdapter implements WhatsappRepository {
     private status = false;
     private client: Client;
+    private qrListener: QrListener
 
     constructor() {
+        this.qrListener = container.get<QrListener>(TYPES.QrListener);
         this.client = new Client({
             authStrategy: new LocalAuth(),
-            puppeteer: {headless: true},
+            puppeteer: {
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            },
         })
+        context = this;
 
         console.log("Iniciando....");
 
@@ -32,14 +41,20 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
 
         this.client.on("qr", (qr) => {
             console.log('Escanea el codigo QR que esta en la carepta tmp')
-
-            //generate(qr, {small: true});
-            this.generateImage(qr);
-            console.log(qr);
+            this.generateImage(qr)
+            //
         });
 
         this.client.on('message', message => {
-            console.log(message);
+            if (message.from !== 'status@broadcast')
+                console.log(message);
+            else
+                console.log('BROADCAST IGNORED')
+        });
+
+        this.client.on('disconnected', message => {
+            console.log("DISCONNECTED");
+            container.rebind(TYPES.WhatsappRepository).to(WhatsappRespositoryAdapter).inSingletonScope();
         });
 
     }
@@ -47,8 +62,8 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
 
     notifier(message: Message): Promise<Message> {
         try {
-            if (!this.status){
-                message. error= "WAIT_LOGIN";
+            if (!this.status) {
+                message.error = "WAIT_LOGIN";
                 return Promise.resolve(message);
             }
 
@@ -66,15 +81,8 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
     }
 
     private generateImage = (base64: string) => {
-        const path = `${process.cwd()}/tmp`;
-        console.log(path)
-        if (!require("fs").existsSync(path)){
-            require("fs").mkdirSync(path, { recursive: true });
-        }
-        let qr_svg = imageQr(base64, {type: "svg", margin: 4});
-        qr_svg.pipe(require("fs").createWriteStream(`${path}/qr.svg`));
-        console.log(`⚡ Recuerda que el QR se actualiza cada minuto ⚡'`);
-        console.log(`⚡ Actualiza F5 el navegador para mantener el mejor QR⚡`);
+        let qr_svg = imageQr(base64, {type: "png", margin: 4});
+        this.qrListener.onQr(qr_svg.toString("base64"));
     };
 
 }
