@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import {TYPES} from "../../../../application/config/types";
-import {inject, injectable} from "inversify";
+import {injectable} from "inversify";
 import {WhatsappUseCase} from "../../../../core/use-case/whatsapp-use-case";
 import {container} from "../../../../application/config/inversify.config";
 
@@ -17,10 +17,11 @@ export class WhatsappController {
     }
 
     post(req: Request, res: Response) {
-        context.useCase.notifier(req.body)
+        Promise.all(context.useCase.notifier(req.body))
             .then(test =>
                 res.status(200)
                     .json({msg: test, date: new Date()}))
+
     }
 
     get(req: Request, res: Response) {

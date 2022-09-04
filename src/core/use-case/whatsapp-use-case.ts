@@ -5,7 +5,7 @@ import {Message} from "../model/whatsapp/message";
 import {ParamRepository} from "../model/param/param-repository";
 
 @injectable()
-export class WhatsappUseCase{
+export class WhatsappUseCase {
 
     constructor(@inject(TYPES.WhatsappRepository) private whatsappRepository: WhatsappRepository,
                 @inject(TYPES.ParamRepository) private paramRepository: ParamRepository) {
@@ -18,7 +18,14 @@ export class WhatsappUseCase{
             .catch(error => Promise.reject(error.message));
     }
 
-    notifier(message: Message): Promise<Message> {
-        return this.whatsappRepository.notifier(message);
+    notifier(message: Message): Promise<Message>[] {
+        let phones: Array<string> = message.phone.split(',');
+        let names: Array<string> = message.names.split(',');
+        return phones.map((phone, index) => {
+            let currentMessage = Object.create(message);
+            currentMessage.phone = phone;
+            currentMessage.message = message.message.replace('%s', names[index] ? names[index] : '');
+            return this.whatsappRepository.notifier(currentMessage)
+        });
     }
 }

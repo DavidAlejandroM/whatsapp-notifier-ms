@@ -1,7 +1,7 @@
 import {WhatsappRepository} from "../../../core/model/whatsapp/whatsapp-repository";
 import {Message} from "../../../core/model/whatsapp/message";
 import {injectable} from "inversify";
-import {Client, LocalAuth} from "whatsapp-web.js";
+import {Buttons, Client, Contact, List, LocalAuth, Location, MessageMedia, MessageSendOptions} from "whatsapp-web.js";
 import {TYPES} from "../../../application/config/types";
 import {container} from "../../../application/config/inversify.config";
 import {QrListener} from "../../../core/model/whatsapp/qr-listener";
@@ -66,10 +66,10 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
                 message.error = "WAIT_LOGIN";
                 return Promise.resolve(message);
             }
+            let [messageConst, options] = this.createRequest(message);
 
-            console.log(message)
 
-            return this.client.sendMessage(`${message.phone}@c.us`, message.message)
+            return this.client.sendMessage(`${message.phone}@c.us`, messageConst, options)
                 .then(response => {
                     message.id = response.id.id;
                     return Promise.resolve(message);
@@ -78,6 +78,17 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
             message.error = e.message
             return Promise.resolve(message);
         }
+    }
+
+    private createRequest(message: Message): [string | MessageMedia | Location | Contact | Contact[] | List | Buttons, MessageSendOptions] {
+        let messageConst: string | MessageMedia | Location | Contact | Contact[] | List | Buttons = message.message;
+        let options: MessageSendOptions = {}
+        if (message.options && message.options.media) {
+            messageConst = new MessageMedia(message.options.media.mimetype, message.options.media.data, message.options.media.filename)
+            options = <MessageSendOptions>message.options
+            options.caption = message.message;
+        }
+        return [messageConst, options];
     }
 
     private generateImage = (base64: string) => {
