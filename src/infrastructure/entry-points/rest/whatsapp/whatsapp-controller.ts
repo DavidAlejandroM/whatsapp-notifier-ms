@@ -25,10 +25,36 @@ export class WhatsappController {
     }
 
     get(req: Request, res: Response) {
-        context.useCase.getQr()
-            .then(html => {
-                res.setHeader("Content-Type", "text/html")
-                res.send(html)
-            })
+        const number: string = req.query.number?.toString() || "";
+
+        number && number !== "" ?
+            context.useCase.getQr(number)
+                .then(html => {
+                    res.status(200).json(html)
+                }) :
+            res.status(400).json({msg: "number is required", date: new Date()})
+    }
+
+    getQrHtml(req: Request, res: Response) {
+        const number: string = req.query.number?.toString() || "";
+
+        number && number !== "" ?
+            context.useCase.getQrHtml(number)
+                .then(html => {
+                    res.setHeader("Content-Type", "text/html")
+                    res.send(html)
+                }) :
+            res.status(400).json({msg: "number is required", date: new Date()})
+    }
+
+    getCreateClient(req: Request, res: Response) {
+        const number: string = req.query.number?.toString() || "";
+
+        number && number !== "" ?
+            context.useCase.createClient(number)
+                .then(test =>
+                    res.status(200)
+                        .json({msg: test, date: new Date()})) :
+            res.status(400).json({msg: "number is required", date: new Date()})
     }
 }

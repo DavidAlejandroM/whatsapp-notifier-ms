@@ -1,5 +1,7 @@
 import {Message} from "./message";
 
 export interface WhatsappRepository {
-    notifier(message: Message): Promise<Message>;
+    notifier(message: Message, client: string): Promise<Message>;
+
+    createClient(client: string): Promise<string>
 }

@@ -1,3 +1,3 @@
 export interface QrListener {
-    onQr(qr: string): void
+    onQr(qr: string, client: string): void
 }

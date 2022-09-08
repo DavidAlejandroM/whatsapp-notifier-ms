@@ -7,4 +7,5 @@ export interface Message {
     phone: string;
     error?: any;
     options: MessageOptions
+    clientNumber: string;
 }

@@ -16,4 +16,8 @@ export class ParamRepositoryAdapter implements ParamRepository {
     save(param: Param): Promise<Param> {
         return ParamData.create(param);
     }
+
+    getAllByLikeKey(key: string): Promise<Array<Param>> {
+        return ParamData.find({key: "/"+key+"/"}).exec();
+    }
 }

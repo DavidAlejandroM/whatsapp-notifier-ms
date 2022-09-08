@@ -11,5 +11,7 @@ const controller: WhatsappController = container.get<WhatsappController>(TYPES.W
 
 router.post("/", controller.post);
 router.get("/", controller.get);
+router.get("/html", controller.getQrHtml);
+router.get("/create", controller.getCreateClient);
 
 export {router};

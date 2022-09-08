@@ -11,11 +11,25 @@ export class WhatsappUseCase {
                 @inject(TYPES.ParamRepository) private paramRepository: ParamRepository) {
     }
 
-    getQr(): Promise<string> {
-        return this.paramRepository.get('QR_LOGIN')
-            .then(param => Promise.resolve("<h1>Imagen</h1>" +
-                "<img src='data:image/png;base64," + param.value + "'>"))
-            .catch(error => Promise.reject(error.message));
+    getQr(client: string): Promise<string> {
+        return this.paramRepository.get('SESSION-' + client)
+            .then(sesion =>
+                !JSON.parse(sesion.value).isActive ?
+                    this.paramRepository.get('QR_LOGIN' + client)
+                        .then(param => Promise.resolve("data:image/png;base64," + param.value))
+                        .catch(error => Promise.reject(error.message)) :
+                    Promise.resolve(''))
+    }
+
+    getQrHtml(client: string): Promise<string> {
+        return this.paramRepository.get('SESSION-' + client)
+            .then(sesion =>
+                !JSON.parse(sesion.value).isActive ?
+                    this.paramRepository.get('QR_LOGIN' + client)
+                        .then(param => Promise.resolve("<h1>Imagen</h1>" +
+                            "<img src='data:image/png;base64," + param.value + "'>"))
+                        .catch(error => Promise.reject(error.message)) :
+                    Promise.resolve(''))
     }
 
     notifier(message: Message): Promise<Message>[] {
@@ -25,7 +39,11 @@ export class WhatsappUseCase {
             let currentMessage = Object.create(message);
             currentMessage.phone = phone;
             currentMessage.message = message.message.replace('%s', names[index] ? names[index] : '');
-            return this.whatsappRepository.notifier(currentMessage)
+            return this.whatsappRepository.notifier(currentMessage, message.clientNumber)
         });
+    }
+
+    createClient(client: string): Promise<string> {
+        return this.whatsappRepository.createClient(client);
     }
 }

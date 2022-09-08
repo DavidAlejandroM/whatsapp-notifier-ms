@@ -5,5 +5,7 @@ export interface ParamRepository {
 
     get(key: string): Promise<Param>;
 
+    getAllByLikeKey(key: string): Promise<Array<Param>>
+
     save(param: Param): Promise<Param>;
 }

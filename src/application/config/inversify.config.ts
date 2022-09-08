@@ -19,6 +19,8 @@ import {ParamRepository} from "../../core/model/param/param-repository";
 import {
     ParamRepositoryAdapter
 } from "../../infrastructure/driven-adapters/mongo-repository/param/param-repository-adapter";
+import {WhatsappEventUseCase} from "../../core/use-case/whatsapp-event-use-case";
+import {WhatsappEvent} from "../../core/model/whatsapp/whatsapp-event";
 
 const container = new Container();
 
@@ -30,5 +32,6 @@ container.bind<ParamRepository>(TYPES.ParamRepository).to(ParamRepositoryAdapter
 container.bind<WhatsappUseCase>(TYPES.WhatsappUseCase).to(WhatsappUseCase).inSingletonScope();
 container.bind<WhatsappController>(TYPES.WhatsappController).to(WhatsappController).inSingletonScope();
 container.bind<QrListener>(TYPES.QrListener).to(QrUseCase).inSingletonScope();
+container.bind<WhatsappEvent>(TYPES.WhatsappEvent).to(WhatsappEventUseCase).inSingletonScope();
 
 export {container}

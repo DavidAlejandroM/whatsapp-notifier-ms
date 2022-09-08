@@ -9,6 +9,8 @@ const TYPES = {
     WhatsappUseCase: Symbol.for("WhatsappUseCase"),
     QrListener: Symbol.for("QrListener"),
     ParamRepository: Symbol.for("ParamRepository"),
+    WhatsappEvent: Symbol.for("WhatsappEvent"),
+
 };
 
 export {TYPES};

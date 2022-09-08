@@ -6,74 +6,90 @@ import {TYPES} from "../../../application/config/types";
 import {container} from "../../../application/config/inversify.config";
 import {QrListener} from "../../../core/model/whatsapp/qr-listener";
 import {imageSync as imageQr} from "qr-image";
-
-let context: WhatsappRespositoryAdapter;
+import {WhatsappEvent} from "../../../core/model/whatsapp/whatsapp-event";
 
 @injectable()
 export class WhatsappRespositoryAdapter implements WhatsappRepository {
     private status = false;
-    private client: Client;
-    private qrListener: QrListener
+    //private client: Client;
+    private qrListener: QrListener;
+    private whatsaapEvents: WhatsappEvent;
+    private clients: Map<string, Client>;
 
     constructor() {
+        this.clients = new Map<string, Client>();
         this.qrListener = container.get<QrListener>(TYPES.QrListener);
-        this.client = new Client({
-            authStrategy: new LocalAuth(),
-            puppeteer: {
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            },
-        })
-        context = this;
+        this.whatsaapEvents = container.get<WhatsappEvent>(TYPES.WhatsappEvent);
+        this.whatsaapEvents.restoreSessions(this);
+    }
 
-        console.log("Iniciando....");
+    getInstance(client: string) {
+        if (!this.clients.get(client)) {
+            this.clients.set(client, new Client({
+                authStrategy: new LocalAuth(
+                    {
+                        clientId: client,
+                        dataPath: "tmp/sesion-" + client
+                    }),
+                puppeteer: {
+                    args: ['--no-sandbox', '--disable-setuid-sandbox']
+                },
+            }));
+            this.events(this.getClient(client), client)
+        }
+        return Promise.resolve(this.clients.get(client))
+    }
 
-        this.client.initialize();
+    events(client: Client | undefined, clientPhone: string) {
+        console.log('init events to ', clientPhone);
+        if (!client) {
+            console.log("error to client");
+            return;
+        }
 
-        this.client.on("ready", () => {
-            this.status = true;
-            console.log("LOGIN_SUCCESS");
-        });
+        client.initialize();
+        client.on('authenticated', (session) => this.whatsaapEvents.onAuthenticate(session, clientPhone));
 
-        this.client.on("auth_failure", () => {
-            this.status = false;
-            console.log("LOGIN_FAIL");
-        });
+        client.on("ready", () => this.whatsaapEvents.onReady(clientPhone));
 
-        this.client.on("qr", (qr) => {
-            console.log('Escanea el codigo QR que esta en la carepta tmp')
-            this.generateImage(qr)
-            //
-        });
+        client.on("auth_failure", () => this.whatsaapEvents.onAuthFailed(clientPhone));
 
-        this.client.on('message', message => {
+        client.on("qr", (qr) => this.generateImage(qr, clientPhone));
+
+        client.on('message', message => {
             if (message.from !== 'status@broadcast')
-                console.log(message);
+                this.whatsaapEvents.onMessage(message, clientPhone);
             else
-                console.log('BROADCAST IGNORED')
+                console.log('BROADCAST IGNORED', clientPhone);
         });
 
-        this.client.on('disconnected', message => {
-            console.log("DISCONNECTED");
-            container.rebind(TYPES.WhatsappRepository).to(WhatsappRespositoryAdapter).inSingletonScope();
+        client.on('disconnected', () => {
+            this.clients.delete(clientPhone);
+            this.whatsaapEvents.onDisconnected(clientPhone);
         });
+    }
 
+    getClient(client: string): Client | undefined {
+        return this.clients.get(client);
     }
 
 
-    notifier(message: Message): Promise<Message> {
+    notifier(message: Message, client: string): Promise<Message> {
         try {
-            if (!this.status) {
-                message.error = "WAIT_LOGIN";
-                return Promise.resolve(message);
-            }
             let [messageConst, options] = this.createRequest(message);
+            const clientWp = this.getClient(client);
 
+            console.log(messageConst)
+            console.log(options)
+            console.log(message)
 
-            return this.client.sendMessage(`${message.phone}@c.us`, messageConst, options)
-                .then(response => {
-                    message.id = response.id.id;
-                    return Promise.resolve(message);
-                });
+            return clientWp ?
+                clientWp.sendMessage(`${message.phone}@c.us`, messageConst, options)
+                    .then(response => {
+                        message.id = response.id.id;
+                        return Promise.resolve(message);
+                    }) :
+                Promise.reject();
         } catch (e: any) {
             message.error = e.message
             return Promise.resolve(message);
@@ -91,9 +107,13 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
         return [messageConst, options];
     }
 
-    private generateImage = (base64: string) => {
+    private generateImage = (base64: string, client: string) => {
         let qr_svg = imageQr(base64, {type: "png", margin: 4});
-        this.qrListener.onQr(qr_svg.toString("base64"));
+        this.qrListener.onQr(qr_svg.toString("base64"), client);
     };
+
+    createClient(client: string): Promise<string> {
+        return this.getInstance(client).then(a => Promise.resolve('client generate' + client))
+    }
 
 }
