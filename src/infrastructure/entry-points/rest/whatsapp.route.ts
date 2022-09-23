@@ -10,8 +10,9 @@ const router: Router = Router();
 const controller: WhatsappController = container.get<WhatsappController>(TYPES.WhatsappController);
 
 router.post("/", controller.post);
-router.get("/", controller.get);
+router.get("/", controller.getQr);
 router.get("/html", controller.getQrHtml);
 router.get("/create", controller.getCreateClient);
+router.get("/logout", controller.logout)
 
 export {router};

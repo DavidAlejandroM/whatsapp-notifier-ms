@@ -21,12 +21,16 @@ import {
 } from "../../infrastructure/driven-adapters/mongo-repository/param/param-repository-adapter";
 import {WhatsappEventUseCase} from "../../core/use-case/whatsapp-event-use-case";
 import {WhatsappEvent} from "../../core/model/whatsapp/whatsapp-event";
+import {
+    WhatsappRepositoryAdapterFake
+} from "../../infrastructure/driven-adapters/whatsapp-repository/whatsapp-repository-adapter-fake";
 
 const container = new Container();
 
 container.bind<TestRepository>(TYPES.TestRepository).to(TestRepositoryAdapter).inSingletonScope();
 container.bind<TestUseCase>(TYPES.TestUseCase).to(TestUseCase).inSingletonScope();
 container.bind<TestCtrl>(TYPES.TestCtrl).to(TestCtrl).inSingletonScope();
+//container.bind<WhatsappRepository>(TYPES.WhatsappRepository).to(WhatsappRepositoryAdapterFake).inSingletonScope();
 container.bind<WhatsappRepository>(TYPES.WhatsappRepository).to(WhatsappRespositoryAdapter).inSingletonScope();
 container.bind<ParamRepository>(TYPES.ParamRepository).to(ParamRepositoryAdapter).inSingletonScope();
 container.bind<WhatsappUseCase>(TYPES.WhatsappUseCase).to(WhatsappUseCase).inSingletonScope();

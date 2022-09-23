@@ -7,6 +7,9 @@ import {container} from "../../../application/config/inversify.config";
 import {QrListener} from "../../../core/model/whatsapp/qr-listener";
 import {imageSync as imageQr} from "qr-image";
 import {WhatsappEvent} from "../../../core/model/whatsapp/whatsapp-event";
+import {
+    WhatsappMessageListenerAdapter
+} from "../../entry-points/domain-event/message-listener/whatsapp-message-listener-adapter";
 
 @injectable()
 export class WhatsappRespositoryAdapter implements WhatsappRepository {
@@ -15,9 +18,11 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
     private qrListener: QrListener;
     private whatsaapEvents: WhatsappEvent;
     private clients: Map<string, Client>;
+    private listeners: Map<string, any>;
 
     constructor() {
         this.clients = new Map<string, Client>();
+        this.listeners = new Map<string, any>();
         this.qrListener = container.get<QrListener>(TYPES.QrListener);
         this.whatsaapEvents = container.get<WhatsappEvent>(TYPES.WhatsappEvent);
         this.whatsaapEvents.restoreSessions(this);
@@ -50,7 +55,10 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
         client.initialize();
         client.on('authenticated', (session) => this.whatsaapEvents.onAuthenticate(session, clientPhone));
 
-        client.on("ready", () => this.whatsaapEvents.onReady(clientPhone));
+        client.on("ready", () => {
+            this.listeners.set(clientPhone, new WhatsappMessageListenerAdapter(clientPhone))
+            this.whatsaapEvents.onReady(clientPhone)
+        });
 
         client.on("auth_failure", () => this.whatsaapEvents.onAuthFailed(clientPhone));
 
@@ -99,7 +107,7 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
     private createRequest(message: Message): [string | MessageMedia | Location | Contact | Contact[] | List | Buttons, MessageSendOptions] {
         let messageConst: string | MessageMedia | Location | Contact | Contact[] | List | Buttons = message.message;
         let options: MessageSendOptions = {}
-        if (message.options && message.options.media) {
+        if (!!message.options && !!message.options.media && !!message.options.media.data) {
             messageConst = new MessageMedia(message.options.media.mimetype, message.options.media.data, message.options.media.filename)
             options = <MessageSendOptions>message.options
             options.caption = message.message;
@@ -114,6 +122,18 @@ export class WhatsappRespositoryAdapter implements WhatsappRepository {
 
     createClient(client: string): Promise<string> {
         return this.getInstance(client).then(a => Promise.resolve('client generate' + client))
+    }
+
+    logout(client: string): Promise<string> {
+        const clientWp = this.getClient(client);
+        return !!clientWp ?
+            clientWp.logout()
+                .then(() => Promise.resolve(client + 'logout success'))
+                .catch(error => {
+                    console.log(error);
+                    return Promise.reject('interna error whapsapp adapter')
+                }) :
+            Promise.reject('client not found')
     }
 
 }

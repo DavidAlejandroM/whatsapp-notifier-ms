@@ -17,21 +17,22 @@ export class WhatsappController {
     }
 
     post(req: Request, res: Response) {
-        Promise.all(context.useCase.notifier(req.body))
+        context.useCase.notifier(req.body)
             .then(test =>
                 res.status(200)
                     .json({msg: test, date: new Date()}))
 
     }
 
-    get(req: Request, res: Response) {
+    getQr(req: Request, res: Response) {
         const number: string = req.query.number?.toString() || "";
 
         number && number !== "" ?
             context.useCase.getQr(number)
                 .then(html => {
                     res.status(200).json(html)
-                }) :
+                })
+                .catch(e => res.status(400).json({msg: "no login", date: new Date()})) :
             res.status(400).json({msg: "number is required", date: new Date()})
     }
 
@@ -52,6 +53,17 @@ export class WhatsappController {
 
         number && number !== "" ?
             context.useCase.createClient(number)
+                .then(test =>
+                    res.status(200)
+                        .json({msg: test, date: new Date()})) :
+            res.status(400).json({msg: "number is required", date: new Date()})
+    }
+
+    logout(req: Request, res: Response) {
+        const number: string = req.query.number?.toString() || "";
+
+        number && number !== "" ?
+            context.useCase.logout(number)
                 .then(test =>
                     res.status(200)
                         .json({msg: test, date: new Date()})) :
